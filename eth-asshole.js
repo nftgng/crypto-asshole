@@ -2,8 +2,8 @@ const ethers = require('ethers');
 const nodemailer = require('nodemailer');
 const fs = require('fs/promises');
 
-const API_KEY = 'https://eth-mainnet.g.alchemy.com/v2/JCNCAmqFfaWQ9WQrW143reOVrnRg1YfY';
-const provider = new ethers.providers.JsonRpcProvider(API_KEY);
+const API_KEY = https://mainnet.infura.io/v3/267cf8a4393e43739b3dbace75de0030;
+const provider = new ethers.providers.JsonRpcProvider(267cf8a4393e43739b3dbace75de0030);
 
 async function sendEmail(wallet) {
   const transporter = nodemailer.createTransport({
