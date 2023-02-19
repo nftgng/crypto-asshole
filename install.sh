@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # change to eth-asshole directory
-cd ~/eth-asshole
+cd ~/crypto-asshole
 
 # install Node.js and npm
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
