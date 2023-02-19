@@ -16,4 +16,4 @@ npm install dotenv
 chmod +x script.js
 
 # run the script
-./script.js
+node ./script.js
